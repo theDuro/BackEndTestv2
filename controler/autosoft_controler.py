@@ -49,12 +49,12 @@ def login():
     if not username or not password:
         return jsonify(msg="Brak loginu lub hasla"), 400
 
-    duck = get_company_with_login(username)
-    if not duck:
+    token_data = get_company_with_login(username)
+    if not token_data:
         return jsonify(msg="Bledny login lub haslo"), 401
 
-    if duck.password == password:
-        access_token = create_access_token(identity={"company_id": duck.id, "login": duck.login})
+    if token_data.password == password:
+        access_token = create_access_token(identity={"company_id": token_data.id, "login": token_data.login})
         return jsonify(access_token=access_token), 200
     else:
         return jsonify(msg="Bledny login lub haslo"), 401
@@ -67,7 +67,6 @@ def get_machine_data_by_id_and_range(machine_id):
     result = get_machine_data_by_id_and_time_range(machine_id, start_time, end_time)
     return jsonify([item.__dict__ for item in result])
 #todo add task to sc
-
 if __name__ == "__main__":
     app.run(port=5000, debug=True, use_reloader=False)
 

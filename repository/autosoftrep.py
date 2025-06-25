@@ -7,7 +7,8 @@ from typing import Optional
 
 from dto.machine_data import MachineDataDTO
 from model.models import Base, Company, Machine, MachineDataORM
-DATABASE_URL = "postgresql://postgres:123456@localhost:5432/autosoft"
+DATABASE_URL = "postgresql://autosoft:Test1234%21@autosoft.postgres.database.azure.com:5432/postgres?sslmode=require"
+
 engine = create_engine(DATABASE_URL, echo=False)
 Base.metadata.create_all(engine)
 SessionLocal = scoped_session(sessionmaker(bind=engine))
