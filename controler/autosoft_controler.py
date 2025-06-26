@@ -1,13 +1,18 @@
+
 from flask import Flask, jsonify,request
 from flask_cors import CORS
-from repository.autosoftrep import get_all_machine_data_dto, get_machine_data_dto_by_id,get_machines_dto_by_company_id,get_machines,get_machine_data_by_id_and_time_range,get_company_with_login,get_all_machine_data_by_company_id_dto,get_machines_dto_by_company_id
 from dto.machine_data import MachineDataDTO
+from repository.autosoftrep import get_all_machine_data_dto, get_machine_data_dto_by_id,get_machines_dto_by_company_id,get_machines,get_machine_data_by_id_and_time_range,get_company_with_login,get_all_machine_data_by_company_id_dto,get_machines_dto_by_company_id
 from datetime import datetime
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 app = Flask(__name__)
 CORS(app)
-app.config["JWT_SECRET_KEY"] = "tajny_klucz"  # Zmieñ na coœ bezpiecznego
+app.config["JWT_SECRET_KEY"] = "tajny_klucz"  
 jwt = JWTManager(app)
 
 USERS = {
