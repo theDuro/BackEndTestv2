@@ -19,6 +19,10 @@ USERS = {
     "admin": "password123"
 }
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    return jsonify({"message": "pong"}), 200
+
 #@jwt_required()
 def get_all_machine_data():
     results = get_all_machine_data_dto()

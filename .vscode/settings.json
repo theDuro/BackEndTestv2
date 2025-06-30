@@ -36,5 +36,7 @@
         "env.bak{,/**}",
         "venv.bak{,/**}",
         ".vscode{,/**}"
-    ]
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/f96406d9-c899-48e1-a04d-332b0f0b4f57/resourceGroups/autosoft/providers/Microsoft.Web/sites/SoftBackEnd",
+    "appService.deploySubpath": "."
 }
