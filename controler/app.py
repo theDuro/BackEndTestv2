@@ -72,10 +72,10 @@ def get_machine_data_by_id_and_range(machine_id):
     result = get_machine_data_by_id_and_time_range(machine_id, start_time, end_time)
     return jsonify([item.__dict__ for item in result])
 #todo add task to sc
+
 if __name__ == "__main__":
-    app.run(port=5000, debug=True, use_reloader=False)
-
-
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
 
 
        
