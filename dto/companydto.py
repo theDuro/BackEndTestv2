@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
-from model.models import Company  # Zak³adam, ¿e to jest ORM z SQLAlchemy
+from model.models import Company  # Zakï¿½adam, ï¿½e to jest ORM z SQLAlchemy
 
 @dataclass
 class CompanyDTO:
