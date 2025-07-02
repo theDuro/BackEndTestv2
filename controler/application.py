@@ -23,10 +23,15 @@ USERS = {
 def ping():
     return jsonify({"message": "pong"}), 200
 
+
 #@jwt_required()
 def get_all_machine_data():
     results = get_all_machine_data_dto()
     return jsonify(results)
+
+@app.route('/test', methods=['GET'])
+def test():
+    return jsonify("TEST")
 
 @app.route('/api/get_machine_data_by_company_id/<int:company_id>', methods=['GET'])
 def get_machine_data_by_company_id(company_id):
@@ -78,7 +83,7 @@ def get_machine_data_by_id_and_range(machine_id):
 #todo add task to sc
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 8000))#5000
     app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
 
 
