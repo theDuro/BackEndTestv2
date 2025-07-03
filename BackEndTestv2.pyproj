@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b938e7b2-74f1-4d5b-bb58-87fe98f6da4f</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>controler\autosoft_controler.py</StartupFile>
+    <StartupFile>controler\application.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
