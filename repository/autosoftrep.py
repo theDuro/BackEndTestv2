@@ -116,3 +116,26 @@ def get_all_machine_data_by_company_id_dto(company_id: int):
             .all()
         )
         return [MachineDataDTO.from_orm(obj) for obj in results]
+def update_machine_config(machine_id: int, config: dict) -> Machine:
+    with get_db_session() as session:
+        machine = session.query(Machine).get(machine_id)
+        if not machine:
+            raise ValueError(f"Machine with id {machine_id} not found")
+
+        machine.config = config
+        session.flush()
+        return machine
+def get_machine_config(machine_id: int) -> dict:
+    with get_db_session() as session:
+        machine = session.query(Machine).get(machine_id)
+        if not machine:
+            raise ValueError(f"Machine with id {machine_id} not found")
+        return machine.config or {}
+    
+def update_machine_config(machine_id: int, new_config: dict) -> None:
+    with get_db_session() as session:
+        machine = session.query(Machine).get(machine_id)
+        if not machine:
+            raise ValueError(f"Machine with id {machine_id} not found")
+        machine.config = new_config
+        session.commit()
