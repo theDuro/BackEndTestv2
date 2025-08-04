@@ -51,7 +51,7 @@ def get_all_machines_by_company_id(company_id):
 
 @app.route('/api/get_conf_by_machine_id/<int:machine_id>', methods=['GET'])
 def get_conf_buy_machine_id(machine_id):
-    result = get_conf_buy_machine_id(machine_id)
+    result = get_machine_config(machine_id)
     return jsonify([item.to_dict() for item in result])
 
 @app.route('/api/get_machines', methods=['GET'])
@@ -79,15 +79,14 @@ def login():
         return jsonify(msg="Bledny login lub haslo"), 401
     
     
-@app.route('/api/update_conf_by_machine_id', methods=['POST'])
-def update_conf_by_machine_id():
+@app.route('/api/update_conf_by_machine_id/<string:machine_id>', methods=['POST'])
+def update_conf_by_machine_id(machine_id):
     data = request.get_json()
 
-    machine_id = data.get('machine_id')
     new_config = data.get('new_config')
 
-    if machine_id is None or new_config is None:
-        return jsonify({'error': 'Missing machine_id or new_config'}), 400
+    if new_config is None:
+        return jsonify({'error': 'Missing new_config in request body'}), 400
 
     try:
         update_machine_config(machine_id, new_config)
@@ -96,7 +95,6 @@ def update_conf_by_machine_id():
         return jsonify({'error': str(e)}), 404
     except Exception as e:
         return jsonify({'error': 'Unexpected error', 'details': str(e)}), 500
-    
     
 
 
