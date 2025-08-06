@@ -49,10 +49,42 @@ def get_all_machines_by_company_id(company_id):
     result = get_machines_dto_by_company_id(company_id)
     return jsonify([item.to_dict() for item in result])
 
+import json
+from flask import jsonify
+
 @app.route('/api/get_conf_by_machine_id/<int:machine_id>', methods=['GET'])
 def get_conf_buy_machine_id(machine_id):
     result = get_machine_config(machine_id)
-    return jsonify([item.to_dict() for item in result])
+
+    # Jeśli None lub pusty – zwróć pustą listę
+    if not result:
+        return jsonify([])
+
+    # Jeśli to słownik, zwróć bez zmian
+    if isinstance(result, dict):
+        return jsonify(result)
+
+    # Jeśli to lista, obsłuż dalej
+    if isinstance(result, list):
+        first_item = result[0]
+
+        # Jeśli elementy to stringi (JSON w stringach)
+        if isinstance(first_item, str):
+            try:
+                parsed_result = [json.loads(item) for item in result]
+                return jsonify(parsed_result)
+            except json.JSONDecodeError:
+                return jsonify({'error': 'Invalid JSON format in list'}), 500
+
+        # Jeśli elementy to słowniki
+        elif isinstance(first_item, dict):
+            return jsonify(result)
+
+        else:
+            return jsonify({'error': f'Unsupported list item type: {type(first_item)}'}), 500
+
+    # Jeśli typ nieobsługiwany
+    return jsonify({'error': f'Unsupported data type: {type(result)}'}), 500
 
 @app.route('/api/get_machines', methods=['GET'])
 def get_all_machines():
@@ -79,7 +111,7 @@ def login():
         return jsonify(msg="Bledny login lub haslo"), 401
     
     
-@app.route('/api/update_conf_by_machine_id/<string:machine_id>', methods=['POST'])
+@app.route('/api/update_conf_by_machine_id/<int:machine_id>', methods=['POST'])
 def update_conf_by_machine_id(machine_id):
     data = request.get_json()
 
