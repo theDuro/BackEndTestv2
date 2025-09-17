@@ -7,6 +7,7 @@ from typing import Optional
 
 from dto.machine_data import MachineDataDTO
 from model.models import Base, Company, Machine, MachineDataORM
+from dto.machine_error import ErrorDTO
 DATABASE_URL = "postgresql://autosoft:Test1234%21@autosoft.postgres.database.azure.com:5432/postgres?sslmode=require"
 
 engine = create_engine(DATABASE_URL, echo=False)
@@ -84,11 +85,7 @@ def get_machine_data_dto_by_id(machine_id: int):
            dtos = [MachineDataDTO.from_orm(obj) for obj in results]
            return dtos
 
-def get_machines_dto_by_company_id(company_id: int):
-    with get_db_session() as session:
-        orm_objects = session.query(Machine).filter_by(company_id=company_id).all()
-        dtos = [MachineDTO.from_orm(obj) for obj in orm_objects]
-        return dtos
+
 
 def get_machines():
     with get_db_session() as session:
@@ -139,3 +136,33 @@ def update_machine_config(machine_id: int, new_config: dict) -> None:
             raise ValueError(f"Machine with id {machine_id} not found")
         machine.config = new_config
         session.commit()
+
+def get_machines_dto_by_company_id(company_id: int):
+    with get_db_session() as session:
+        orm_objects = session.query(Machine).filter_by(company_id=company_id).all()
+        dtos = [MachineDTO.from_orm(obj) for obj in orm_objects]
+        return dtos        
+
+
+def get_all_errors_by_company_id(company_id: int):
+    from model.models import MachineError
+    from model.models import Machine
+    with get_db_session() as session:
+        results = (
+            session.query(MachineError)
+            .join(Machine)
+            .filter(Machine.company_id == company_id)
+            .all()
+        )
+        return [ErrorDTO.from_orm(obj) for obj in results]
+
+def get_error_by_machine_id(machine_id: int):
+    from model.models import MachineError
+    from dto.machine_error import ErrorDTO
+    with get_db_session() as session:
+        results = (
+            session.query(MachineError)
+            .filter(MachineError.machine_id == machine_id)
+            .all()
+        )
+        return [ErrorDTO.from_orm(obj) for obj in results]

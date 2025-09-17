@@ -28,7 +28,7 @@ class Machine(Base):
 
     company = relationship("Company", back_populates="machines")
     machine_data = relationship("MachineDataORM", back_populates="machine")
-
+    errors = relationship("MachineError", back_populates="machine", cascade="all, delete-orphan")
 
 class MachineDataORM(Base):
     __tablename__ = 'machine_data'
@@ -46,4 +46,11 @@ class MachineDataORM(Base):
 
     machine = relationship("Machine", back_populates="machine_data")
 
-    
+class MachineError(Base):
+    __tablename__ = 'errors'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    machine_id = Column(Integer, ForeignKey('machines.id'), nullable=False)
+    error_code = Column(String, nullable=False)
+    description = Column(String)
+    created_at = Column(DateTime, default=func.now())
+    machine = relationship("Machine", back_populates="errors")
