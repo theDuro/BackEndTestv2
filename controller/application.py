@@ -132,12 +132,12 @@ def update_conf_by_machine_id(machine_id):
 @app.route('/api/get_errors_by_company_id/<int:company_id>', methods=['GET'])
 def get_errors_by_company_id(company_id):
     result = get_all_errors_by_company_id(company_id)
-    return jsonify([e.dict() for e in result])
+    return jsonify([e.__dict__ for e in result])
 
 @app.route('/api/get_errors_by_machine_id/<int:machine_id>', methods=['GET'])
 def get_errors_by_machine_id(machine_id):
     result = get_error_by_machine_id(machine_id)
-    return jsonify([e.dict() for e in result])
+    return jsonify([e.__dict__ for e in result])
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))#5000
