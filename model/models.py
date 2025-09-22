@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 Base = declarative_base()
 
+
 class Company(Base):
     __tablename__ = 'companies'
 
@@ -29,6 +30,8 @@ class Machine(Base):
     company = relationship("Company", back_populates="machines")
     machine_data = relationship("MachineDataORM", back_populates="machine")
     errors = relationship("MachineError", back_populates="machine", cascade="all, delete-orphan")
+    parts = relationship("MachinePart", back_populates="machine", cascade="all, delete-orphan")
+
 
 class MachineDataORM(Base):
     __tablename__ = 'machine_data'
@@ -46,11 +49,51 @@ class MachineDataORM(Base):
 
     machine = relationship("Machine", back_populates="machine_data")
 
+
 class MachineError(Base):
     __tablename__ = 'errors'
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     machine_id = Column(Integer, ForeignKey('machines.id'), nullable=False)
     error_code = Column(String, nullable=False)
     description = Column(String)
     created_at = Column(DateTime, default=func.now())
+
     machine = relationship("Machine", back_populates="errors")
+
+
+class MachinePart(Base):
+    __tablename__ = 'machine_parts'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    machine_id = Column(Integer, ForeignKey('machines.id', ondelete='CASCADE'), nullable=False)
+    name = Column(String, nullable=False)
+    x = Column(Float, nullable=False, default=0.0)
+    y = Column(Float, nullable=False, default=0.0)
+
+    machine = relationship("Machine", back_populates="parts")
+    errors = relationship("MachinePartError", back_populates="part", cascade="all, delete-orphan")
+
+
+class MachinePartError(Base):
+    __tablename__ = 'machine_part_errors'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    part_id = Column(Integer, ForeignKey('machine_parts.id', ondelete='CASCADE'), nullable=False)
+    error_code = Column(String(50), nullable=False)
+    description = Column(String)
+
+    part = relationship("MachinePart", back_populates="errors")
+    occurrences = relationship("MachinePartErrorOccurrence", back_populates="error", cascade="all, delete-orphan")
+
+
+class MachinePartErrorOccurrence(Base):
+    __tablename__ = 'machine_part_error_occurrences'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    error_id = Column(Integer, ForeignKey('machine_part_errors.id', ondelete='CASCADE'), nullable=False)
+    part_id = Column(Integer, ForeignKey('machine_parts.id', ondelete='CASCADE'), nullable=False)
+    occurred_at = Column(DateTime, default=func.now())
+
+    error = relationship("MachinePartError", back_populates="occurrences")
+    part = relationship("MachinePart")
