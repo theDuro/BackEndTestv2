@@ -8,6 +8,9 @@ from typing import Optional
 from dto.machine_data import MachineDataDTO
 from model.models import Base, Company, Machine, MachineDataORM
 from dto.machine_error import ErrorDTO
+from dto.machine_part import MachinePartDTO 
+from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
+from dto.machine_part_error import MachinePartError
 DATABASE_URL = "postgresql://autosoft:Test1234%21@autosoft.postgres.database.azure.com:5432/postgres?sslmode=require"
 
 engine = create_engine(DATABASE_URL, echo=False)
@@ -166,3 +169,35 @@ def get_error_by_machine_id(machine_id: int):
             .all()
         )
         return [ErrorDTO.from_orm(obj) for obj in results]
+
+def get_machine_parts_by_machine_id(machine_id: int):
+    from model.models import MachinePart
+    with get_db_session() as session:
+        results = session.query(MachinePart).filter_by(machine_id=machine_id).all()
+        return [MachinePartDTO.from_orm(obj) for obj in results]
+
+def get_machine_part_errors_by_part_id(part_id: int):
+    from model.models import MachinePartError
+    from dto.machine_part_error import MachinePartErrorDTO
+    with get_db_session() as session:
+        results = session.query(MachinePartError).filter_by(part_id=part_id).all()
+        return [MachinePartErrorDTO.from_orm(obj) for obj in results]
+    
+def get_occurrences_by_part_id(part_id: int):
+    from model.models import MachinePartErrorOccurrence
+    from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
+    with get_db_session() as session:
+        results = session.query(MachinePartErrorOccurrence).filter_by(part_id=part_id).all()
+        return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
+
+def get_occurrences_by_machine_id(machine_id: int):
+    from model.models import MachinePartErrorOccurrence, MachinePart
+    from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
+    with get_db_session() as session:
+        results = (
+            session.query(MachinePartErrorOccurrence)
+            .join(MachinePart, MachinePart.id == MachinePartErrorOccurrence.part_id)
+            .filter(MachinePart.machine_id == machine_id)
+            .all()
+        )
+        return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
