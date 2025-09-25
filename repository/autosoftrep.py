@@ -201,6 +201,16 @@ def get_occurrences_by_machine_id(machine_id: int):
             .all()
         )
         return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
+    
+def get_all_occurrences():
+    from model.models import MachinePartErrorOccurrence
+    from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
+    with get_db_session() as session:
+        results = (
+            session.query(MachinePartErrorOccurrence)
+            .all()
+        )
+        return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
 
 def get_errors_for_part(part_id: int):
     from model.models import MachinePartError

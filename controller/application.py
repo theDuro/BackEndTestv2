@@ -2,7 +2,7 @@
 from flask import Flask, jsonify,request
 from flask_cors import CORS
 from dto.machine_data import MachineDataDTO
-from repository.autosoftrep import get_all_machine_data_dto, get_machine_data_dto_by_id,get_machines_dto_by_company_id,get_machines,get_machine_data_by_id_and_time_range,get_company_with_login,get_all_machine_data_by_company_id_dto,get_machines_dto_by_company_id,get_machine_config,update_machine_config,get_all_errors_by_company_id,get_error_by_machine_id,get_machine_parts_by_machine_id,get_occurrences_by_machine_id
+from repository.autosoftrep import get_all_machine_data_dto, get_machine_data_dto_by_id,get_machines_dto_by_company_id,get_machines,get_machine_data_by_id_and_time_range,get_company_with_login,get_all_machine_data_by_company_id_dto,get_machines_dto_by_company_id,get_machine_config,update_machine_config,get_all_errors_by_company_id,get_error_by_machine_id,get_machine_parts_by_machine_id,get_occurrences_by_machine_id,get_errors_for_part,get_all_occurrences
 from datetime import datetime
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity 
 import sys
@@ -154,6 +154,10 @@ def api_get_occurrences_by_machine_id(machine_id):
     result = get_occurrences_by_machine_id(machine_id)
     return jsonify([o.__dict__ for o in result])
 
+@app.route('/api/get_all_occurrences', methods=['GET'])
+def api_get_all_occurrences():
+    result = get_all_occurrences()
+    return jsonify([o.__dict__ for o in result])
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))#5000
