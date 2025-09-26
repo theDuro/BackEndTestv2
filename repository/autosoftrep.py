@@ -4,7 +4,9 @@ from contextlib import contextmanager
 from dto.machine import MachineDTO
 from dto.companydto import CompanyDTO
 from typing import Optional
-
+from datetime import datetime
+from typing import List
+from model.models import MachinePartErrorOccurrence
 from dto.machine_data import MachineDataDTO
 from model.models import Base, Company, Machine, MachineDataORM
 from dto.machine_error import ErrorDTO
@@ -218,3 +220,28 @@ def get_errors_for_part(part_id: int):
     with get_db_session() as session:
         results = session.query(MachinePartError).filter_by(part_id=part_id).all()
         return [MachinePartErrorDTO.from_orm(obj) for obj in results]
+    
+# def get_error_ids_for_part_in_date_range(
+#     part_id: int,
+#     date_from: datetime,
+#     date_to: datetime
+# ) -> List[int]:
+   
+#     with get_db_session() as session:  
+#         results = (
+#             session.query(MachinePartErrorOccurrence.error_id)
+#             .filter(MachinePartErrorOccurrence.part_id == part_id)
+#             .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
+#             .filter(MachinePartErrorOccurrence.occurred_at <= date_to)
+#             .all()
+#         )
+#         return [row[0] for row in results]
+def get_error_ids_for_part_in_date_range(part_id, date_from):
+    with get_db_session() as session:
+        results = (
+            session.query(MachinePartErrorOccurrence.error_id)
+            .filter(MachinePartErrorOccurrence.part_id == part_id)
+            .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
+            .all()
+        )
+        return [row[0] for row in results]
