@@ -173,6 +173,30 @@ def api_get_error_ids():
     result = get_error_ids_for_part_in_date_range(part_id, date_from)
     return jsonify(result)
 
+@app.route('/api/get_error_str', methods=['GET'])
+def api_get_error_str():
+    from repository.autosoftrep import get_error_code_for_part_in_date_range
+    try:
+        part_id = int(request.args.get("part_id"))
+        date_from = datetime.fromisoformat(request.args.get("date_from"))
+    except (TypeError, ValueError) as e:
+        return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+
+    result = get_error_code_for_part_in_date_range(part_id, date_from)
+    return jsonify(result)
+
+@app.route('/api/get_error_for_parts', methods=['GET'])
+def api_get_error():
+    from repository.autosoftrep import get_occurrences_by_part_id_and_date
+    try:
+        part_id = int(request.args.get("part_id"))
+        date_from = datetime.fromisoformat(request.args.get("date_from"))
+    except (TypeError, ValueError) as e:
+        return jsonify({"error": f"Invalid input: {str(e)}"}), 400
+
+    result = get_occurrences_by_part_id_and_date(part_id, date_from)
+    return jsonify(result)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))#5000
     app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)

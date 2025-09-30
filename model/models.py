@@ -80,9 +80,8 @@ class MachinePartError(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     part_id = Column(Integer, ForeignKey('machine_parts.id', ondelete='CASCADE'), nullable=False)
-    error_code = Column(String(50), nullable=False)
+    error_code = Column(String(50))
     description = Column(String)
-
     part = relationship("MachinePart", back_populates="errors")
     occurrences = relationship("MachinePartErrorOccurrence", back_populates="error", cascade="all, delete-orphan")
 
@@ -94,6 +93,8 @@ class MachinePartErrorOccurrence(Base):
     error_id = Column(Integer, ForeignKey('machine_part_errors.id', ondelete='CASCADE'), nullable=False)
     part_id = Column(Integer, ForeignKey('machine_parts.id', ondelete='CASCADE'), nullable=False)
     occurred_at = Column(DateTime, default=func.now())
+    error_code = Column(String, nullable=False)
+    description = Column(String, nullable=True)
 
     error = relationship("MachinePartError", back_populates="occurrences")
     part = relationship("MachinePart")

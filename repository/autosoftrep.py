@@ -185,12 +185,8 @@ def get_machine_part_errors_by_part_id(part_id: int):
         results = session.query(MachinePartError).filter_by(part_id=part_id).all()
         return [MachinePartErrorDTO.from_orm(obj) for obj in results]
     
-def get_occurrences_by_part_id(part_id: int):
-    from model.models import MachinePartErrorOccurrence
-    from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
-    with get_db_session() as session:
-        results = session.query(MachinePartErrorOccurrence).filter_by(part_id=part_id).all()
-        return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
+  
+
 
 def get_occurrences_by_machine_id(machine_id: int):
     from model.models import MachinePartErrorOccurrence, MachinePart
@@ -221,21 +217,7 @@ def get_errors_for_part(part_id: int):
         results = session.query(MachinePartError).filter_by(part_id=part_id).all()
         return [MachinePartErrorDTO.from_orm(obj) for obj in results]
     
-# def get_error_ids_for_part_in_date_range(
-#     part_id: int,
-#     date_from: datetime,
-#     date_to: datetime
-# ) -> List[int]:
-   
-#     with get_db_session() as session:  
-#         results = (
-#             session.query(MachinePartErrorOccurrence.error_id)
-#             .filter(MachinePartErrorOccurrence.part_id == part_id)
-#             .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
-#             .filter(MachinePartErrorOccurrence.occurred_at <= date_to)
-#             .all()
-#         )
-#         return [row[0] for row in results]
+
 def get_error_ids_for_part_in_date_range(part_id, date_from):
     with get_db_session() as session:
         results = (
@@ -245,3 +227,26 @@ def get_error_ids_for_part_in_date_range(part_id, date_from):
             .all()
         )
         return [row[0] for row in results]
+    
+def get_error_code_for_part_in_date_range(part_id, date_from):
+    with get_db_session() as session:
+        results = (
+            session.query(MachinePartErrorOccurrence.error_code)
+            .filter(MachinePartErrorOccurrence.part_id == part_id)
+            .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
+            .all()
+        )
+        return [row[0] for row in results]
+    
+def get_occurrences_by_part_id_and_date(part_id: int, date_from):
+    from model.models import MachinePartErrorOccurrence
+    from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
+    with get_db_session() as session:
+        results = session.query(MachinePartErrorOccurrence)\
+            .filter(MachinePartErrorOccurrence.part_id == part_id)\
+            .filter(MachinePartErrorOccurrence.occurred_at >= date_from)\
+            .all()
+        
+        # Tworzymy DTO w tym samym bloku sesji
+        dtos = [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
+        return dtos
