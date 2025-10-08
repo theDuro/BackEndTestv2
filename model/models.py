@@ -70,10 +70,12 @@ class MachinePart(Base):
     name = Column(String, nullable=False)
     x = Column(Float, nullable=False, default=0.0)
     y = Column(Float, nullable=False, default=0.0)
+    its_working = Column(Boolean, nullable=False, default=True)  # ✅ nowe pole logiczne
 
+    # relacje
     machine = relationship("Machine", back_populates="parts")
     errors = relationship("MachinePartError", back_populates="part", cascade="all, delete-orphan")
-
+    stats = relationship("MachinePartStat", back_populates="part", cascade="all, delete-orphan")  # ✅ relacja wiele–do–jednego
 
 class MachinePartError(Base):
     __tablename__ = 'machine_part_errors'
@@ -95,6 +97,17 @@ class MachinePartErrorOccurrence(Base):
     occurred_at = Column(DateTime, default=func.now())
     error_code = Column(String, nullable=False)
     description = Column(String, nullable=True)
-
+ 
     error = relationship("MachinePartError", back_populates="occurrences")
     part = relationship("MachinePart")
+
+class MachinePartStat(Base):
+    __tablename__ = 'machine_part_stats'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    counter = Column(Integer, nullable=False, default=0)
+    is_empty = Column(Boolean, nullable=False, default=False)
+    part_id = Column(Integer, ForeignKey('machine_parts.id', ondelete='CASCADE'), nullable=False)
+
+    part = relationship("MachinePart", back_populates="stats")

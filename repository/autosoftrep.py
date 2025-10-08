@@ -6,8 +6,9 @@ from dto.companydto import CompanyDTO
 from typing import Optional
 from datetime import datetime
 from typing import List
-from model.models import MachinePartErrorOccurrence
+from model.models import MachinePartErrorOccurrence,MachinePartStat
 from dto.machine_data import MachineDataDTO
+from dto.machine_part_stat import MachinePartStat
 from model.models import Base, Company, Machine, MachineDataORM
 from dto.machine_error import ErrorDTO
 from dto.machine_part import MachinePartDTO
@@ -246,7 +247,20 @@ def get_occurrences_by_part_id_and_date(part_id: int, date_from):
             .filter(MachinePartErrorOccurrence.part_id == part_id)\
             .filter(MachinePartErrorOccurrence.occurred_at >= date_from)\
             .all()
-        
-        # Tworzymy DTO w tym samym bloku sesji
+       
         dtos = [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
         return dtos
+    
+def get_stats_for_machine(machine_id):
+    from model.models import MachinePartStat, MachinePart
+    from dto.machine_part_stat import MachinePartStatDTO
+    with get_db_session() as session:
+        results = (
+            session.query(MachinePartStat)
+            .join(MachinePart)
+            .filter(MachinePart.machine_id == machine_id)
+            .all()
+        )
+        return [MachinePartStatDTO.from_orm(obj) for obj in results]
+    
+    
