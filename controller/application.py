@@ -178,6 +178,14 @@ def login():
         return jsonify(msg="Bledny login lub haslo"), 401
 
 # ------------------ RUN ------------------
+@app.route('/api/get_last_errors/<int:machine_id>', methods=['GET'])
+def api_get_last_errors(machine_id):
+        # Wywołanie metody z repozytorium
+        result = repo.get_last_errors(machine_id)
+        # Zamiana DTO na dicty, żeby Flask mógł to jsonify
+        return jsonify([e.__dict__ for e in result]), 200
+  
+    
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)

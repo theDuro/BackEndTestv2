@@ -206,6 +206,7 @@ class AutoSoftRepository:
                 session.query(MachinePartErrorOccurrence.error_code)
                 .filter(MachinePartErrorOccurrence.part_id == part_id)
                 .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
+                .distinct(MachinePartErrorOccurrence.error_type)
                 .all()
             )
             return [row[0] for row in results]
@@ -219,3 +220,16 @@ class AutoSoftRepository:
                 .all()
             )
             return [MachinePartStatDTO.from_orm(obj) for obj in results]
+
+    def get_last_errors(self, machine_id: int):
+        with get_db_session() as session:
+            results = (
+                session.query(MachinePartErrorOccurrence)
+                .join(MachinePart)
+                .filter(MachinePart.machine_id == machine_id)
+                .distinct(MachinePartErrorOccurrence.error_type)  
+                .order_by(MachinePartErrorOccurrence.id.desc())
+                .limit(4)
+                .all()
+            )
+            return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
