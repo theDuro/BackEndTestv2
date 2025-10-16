@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,func
 from sqlalchemy.orm import sessionmaker, scoped_session
 from contextlib import contextmanager
 from datetime import datetime
@@ -200,16 +200,7 @@ class AutoSoftRepository:
             )
             return [row[0] for row in results]
 
-    def get_error_code_for_part_in_date_range(self, part_id: int, date_from: datetime):
-        with get_db_session() as session:
-            results = (
-                session.query(MachinePartErrorOccurrence.error_code)
-                .filter(MachinePartErrorOccurrence.part_id == part_id)
-                .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
-                .distinct(MachinePartErrorOccurrence.error_type)
-                .all()
-            )
-            return [row[0] for row in results]
+   
 
     def get_stats_for_machine(self, machine_id: int):
         with get_db_session() as session:
@@ -220,6 +211,17 @@ class AutoSoftRepository:
                 .all()
             )
             return [MachinePartStatDTO.from_orm(obj) for obj in results]
+        
+    def get_error_code_for_part_in_date_range(self, part_id: int, date_from: datetime):
+        with get_db_session() as session:
+            results = (
+                session.query(MachinePartErrorOccurrence.error_code)
+                .filter(MachinePartErrorOccurrence.part_id == part_id)
+                .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
+                .distinct()
+                .all()
+            )
+            return [row[0] for row in results]   
 
     def get_last_errors(self, machine_id: int):
         with get_db_session() as session:
@@ -227,9 +229,11 @@ class AutoSoftRepository:
                 session.query(MachinePartErrorOccurrence)
                 .join(MachinePart)
                 .filter(MachinePart.machine_id == machine_id)
-                .distinct(MachinePartErrorOccurrence.error_type)  
                 .order_by(MachinePartErrorOccurrence.id.desc())
-                .limit(4)
+                .limit(10)
                 .all()
             )
             return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
+        
+
+        

@@ -180,11 +180,22 @@ def login():
 # ------------------ RUN ------------------
 @app.route('/api/get_last_errors/<int:machine_id>', methods=['GET'])
 def api_get_last_errors(machine_id):
-        # Wywołanie metody z repozytorium
-        result = repo.get_last_errors(machine_id)
-        # Zamiana DTO na dicty, żeby Flask mógł to jsonify
-        return jsonify([e.__dict__ for e in result]), 200
-  
+    # Pobieramy ostatnie 10 błędów z repozytorium
+    errors = repo.get_last_errors(machine_id)
+
+    # Filtrujemy duplikaty po error_code i zostawiamy maks. 4 ostatnie
+    unique_errors = []
+    seen_codes = set()
+
+    for error in errors:
+        if error.error_code not in seen_codes:
+            unique_errors.append(error)
+            seen_codes.add(error.error_code)
+        if len(unique_errors) == 4:
+            break
+
+    # Zamiana DTO na dict, żeby Flask mógł jsonify
+    return jsonify([e.__dict__ for e in unique_errors]), 200
     
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
