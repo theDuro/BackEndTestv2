@@ -198,14 +198,14 @@ def api_get_last_errors(machine_id):
     return jsonify([e.__dict__ for e in unique_errors]), 200
 
 @app.route('/api/get_error_for_machine', methods=['GET'])
-def api_get_error():
+def api_get_error_mahine_and_time():
     try:
         machine_id = int(request.args.get("machine_id"))
         date_from = datetime.fromisoformat(request.args.get("date_from"))
     except (TypeError, ValueError) as e:
         return jsonify({"error": f"Invalid input: {str(e)}"}), 400
     result = repo.get_error_code_for_machine_in_date_range(machine_id, date_from)
-    return jsonify(result)
+    return  jsonify([e.__dict__ for e in  result]), 200
     
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

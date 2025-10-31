@@ -240,14 +240,14 @@ class AutoSoftRepository:
         
         with get_db_session() as session:
             results = (
-                session.query(MachinePartErrorOccurrence.error_code)
+                session.query(MachinePartErrorOccurrence)
                 .join(MachinePart)
                 .filter(MachinePart.machine_id == machine_id)
                 .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
                 .distinct()
                 .all()
             )
-            return [row[0] for row in results]   
+            return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]   
         
 
         
