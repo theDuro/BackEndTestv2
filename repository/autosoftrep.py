@@ -213,6 +213,7 @@ class AutoSoftRepository:
             return [MachinePartStatDTO.from_orm(obj) for obj in results]
         
     def get_error_code_for_part_in_date_range(self, part_id: int, date_from: datetime):
+
         with get_db_session() as session:
             results = (
                 session.query(MachinePartErrorOccurrence.error_code)
@@ -234,6 +235,19 @@ class AutoSoftRepository:
                 .all()
             )
             return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]
+        
+    def get_error_code_for_machine_in_date_range(self,  machine_id: int, date_from: datetime):
+        
+        with get_db_session() as session:
+            results = (
+                session.query(MachinePartErrorOccurrence.error_code)
+                .join(MachinePart)
+                .filter(MachinePart.machine_id == machine_id)
+                .filter(MachinePartErrorOccurrence.occurred_at >= date_from)
+                .distinct()
+                .all()
+            )
+            return [row[0] for row in results]   
         
 
         
