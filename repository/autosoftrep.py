@@ -271,5 +271,32 @@ class AutoSoftRepository:
             # commit nastąpi automatycznie po wyjściu z kontekstu
             return True              
         
+    def insert_part_error_occurrences(self, error_ids: list[int]) -> bool:
+        """
+        Dodaje occurrences dla podanych error_id w tabeli machine_part_error_occurrences.
+        Zwraca True jeśli dodano rekordy, False jeśli lista error_ids była pusta lub nie znaleziono rekordów.
+        """
+        if not error_ids:
+            return False
 
+        with get_db_session() as session:
+            # pobieramy błędy o podanych ID
+            errors = session.query(MachinePartError).filter(MachinePartError.id.in_(error_ids)).all()
+            if not errors:
+                return False
+
+            occurrences = [
+                MachinePartErrorOccurrence(
+                    error_id=e.id,
+                    part_id=e.part_id,
+                    occurred_at=datetime.utcnow(),
+                    error_code=e.error_code,
+                    description=e.description
+                )
+                for e in errors
+            ]
+
+            session.add_all(occurrences)
+            # commit nastąpi automatycznie po wyjściu z context managera
+            return True  
         

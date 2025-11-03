@@ -266,6 +266,26 @@ def api_update_machine_part_stat():
     # --- Inny format ---
     else:
         return jsonify({"error": "Nieprawidłowy format JSON"}), 400
+    
+@app.route("/api/add_occurrences", methods=["POST"])
+def api_add_occurrences():
+    try:
+        data = request.get_json()
+        if not data or "alarms" not in data:
+            return jsonify({"error": "Brak pola 'alarms' w JSON"}), 400
+
+        alarms = data["alarms"]
+        success = repo.insert_part_error_occurrences(alarms)
+        if success:
+            return jsonify({"status": "OK", "added": len(alarms)})
+        else:
+            return jsonify({"status": "FAIL"}), 500
+
+    except Exception as e:
+        print(f"❌ Błąd endpointu: {e}")
+        return jsonify({"error": "Blad serwera"}), 500
+
+    
 
     
 if __name__ == "__main__":
