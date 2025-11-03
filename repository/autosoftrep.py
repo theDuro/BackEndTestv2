@@ -3,6 +3,8 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional, List
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 from model.models import (
     Base, Company, Machine, MachineDataORM,
@@ -25,6 +27,7 @@ DATABASE_URL = "postgresql://autosoft:Test1234%21@autosoft.postgres.database.azu
 engine = create_engine(DATABASE_URL, echo=False)
 Base.metadata.create_all(engine)
 SessionLocal = scoped_session(sessionmaker(bind=engine))
+
 
 @contextmanager
 def get_db_session():
@@ -247,7 +250,26 @@ class AutoSoftRepository:
                 .distinct()
                 .all()
             )
-            return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results]   
+            return [MachinePartErrorOccurrenceDTO.from_orm(obj) for obj in results] 
+
+    def update_machine_part_stat(self, part_id: int, counter: int, is_empty: bool) -> bool:
+        """
+        Aktualizuje rekord w tabeli machine_part_stats.
+        Zwraca True jeśli rekord został zaktualizowany, False jeśli nie znaleziono part_id.
+        """
+        with get_db_session() as session:
+            part_stat = (
+                session.query(MachinePartStat)
+                .filter(MachinePartStat.part_id == part_id)
+                .first()
+            )
+            if not part_stat:
+                return False
+
+            part_stat.counter = counter
+            part_stat.is_empty = is_empty
+            # commit nastąpi automatycznie po wyjściu z kontekstu
+            return True              
         
 
         

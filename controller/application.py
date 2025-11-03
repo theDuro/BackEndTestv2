@@ -3,11 +3,19 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token
 from datetime import datetime
 import os
+# Najpierw import
+import repository.autosoftrep
 
+# Teraz sprawdź, skąd Python ładuje moduł
+print("Ścieżka do modułu autosoftrep:", repository.autosoftrep.__file__)
 from repository.autosoftrep import AutoSoftRepository
 
 # Tworzymy obiekt repozytorium
 repo = AutoSoftRepository()
+print("Typ repo:", type(repo))
+print("Metody repo:", dir(repo))
+
+
 
 # ------------------ Flask setup ------------------
 app = Flask(__name__)
@@ -206,6 +214,59 @@ def api_get_error_mahine_and_time():
         return jsonify({"error": f"Invalid input: {str(e)}"}), 400
     result = repo.get_error_code_for_machine_in_date_range(machine_id, date_from)
     return  jsonify([e.__dict__ for e in  result]), 200
+
+
+##POST
+@app.route('/api/update_machine_part_stat', methods=['POST'])
+def api_update_machine_part_stat():
+    """
+    Aktualizuje statystyki części maszyny.
+    Przyjmuje:
+    {
+      "part_id": 1,
+      "counter": 10,
+      "is_empty": false
+    }
+    lub listę takich obiektów.
+    """
+    data = request.get_json(force=True)
+
+    if not data:
+        return jsonify({"error": "Brak danych JSON"}), 400
+
+    # --- Jeśli lista ---
+    if isinstance(data, list):
+        updated = 0
+        for item in data:
+            try:
+                part_id = int(item["part_id"])
+                counter = int(item["counter"])
+                is_empty = bool(item["is_empty"])
+                if repo.update_machine_part_stat(part_id, counter, is_empty):
+                    updated += 1
+            except (KeyError, ValueError, TypeError):
+                continue
+        return jsonify({"status": "ok", "updated": updated, "received": len(data)}), 200
+
+    # --- Jeśli pojedynczy obiekt ---
+    elif isinstance(data, dict):
+        try:
+            part_id = int(data["part_id"])
+            counter = int(data["counter"])
+            is_empty = bool(data["is_empty"])
+        except (KeyError, ValueError, TypeError):
+            return jsonify({"error": "Nieprawidłowe dane wejściowe"}), 400
+
+        success = repo.update_machine_part_stat(part_id, counter, is_empty)
+        if success:
+            return jsonify({"status": "ok", "message": f"part_id={part_id} zaktualizowany"}), 200
+        else:
+            return jsonify({"error": f"Nie znaleziono części o part_id={part_id}"}), 404
+
+    # --- Inny format ---
+    else:
+        return jsonify({"error": "Nieprawidłowy format JSON"}), 400
+
     
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
