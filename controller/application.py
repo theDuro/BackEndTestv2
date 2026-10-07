@@ -2,6 +2,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token
 from datetime import datetime
+from flask import Response, stream_with_context
+import json, time
+from datetime import datetime, timedelta
+from queue import Queue,Empty
 import os
 # Najpierw import
 import repository.autosoftrep
@@ -22,11 +26,108 @@ app = Flask(__name__)
 CORS(app)
 app.config["JWT_SECRET_KEY"] = "tajny_klucz"
 jwt = JWTManager(app)
+sse_queue = Queue()  # globalna kolejka do SSE
 
 # ------------------ USERS (do testu logowania) ------------------
 USERS = {
     "admin": "password123"
 }
+
+# ------------------ helper get_payload ------------------
+def get_payload(machine_id: int = 1):
+    """
+    Zwraca serializowalny payload dla danej maszyny.
+    Pobiera:
+      - last_errors (lista DTO)
+      - error_str (kody błędów dla pierwszej części, z ostatniej minuty)
+      - counters (statystyki części)
+      - parts (lista części, przydatne dla frontu)
+      - timestamp
+    Wszystko przechodzi przez to_primitive(), więc json.dumps zadziała.
+    """
+    try:
+        # ustawienia domyślne
+        last_min = datetime.now() - timedelta(days=30)
+
+        # pobieramy części i counters
+        parts_raw = repo.get_machine_parts_by_machine_id(machine_id)
+        counters_raw = repo.get_stats_for_machine(machine_id)
+
+        # last errors z repo (DTO)
+        last_errors_raw = repo.get_last_errors(machine_id)
+
+        # wybieramy part_id do query error_str (jeśli nie ma części, użyj 1)
+        part_id = None
+        if parts_raw and isinstance(parts_raw, (list, tuple)) and len(parts_raw) > 0:
+            # obiekt części może mieć atrybut id lub property 'id'
+            first = parts_raw[0]
+            part_id = getattr(first, "id", None) or getattr(first, "part_id", None) or None
+
+        if part_id is None:
+            part_id = 1
+
+        machine_id=1;    
+
+        # pobieramy error_str (kody) od last_min
+        error_str_raw = repo.get_error_code_for_machine_in_date_range(machine_id, date_from=last_min)
+
+        # konwersja na prymitywy
+        payload = {
+            "timestamp": datetime.now().isoformat(),
+            "machine_id": machine_id,
+            "parts": to_primitive(parts_raw),
+            "counters": to_primitive(counters_raw),
+            "last_errors": to_primitive(last_errors_raw),
+            "error_str": to_primitive(error_str_raw),
+        }
+        return payload
+
+    except Exception as e:
+        # jeśli coś pójdzie nie tak, zwracamy komunikat błędu, ale strumień nie upada
+        print(f"❌ Błąd w get_payload(): {e}")
+        return {"timestamp": datetime.now().isoformat(), "error": "get_payload_failed", "msg": str(e)}
+
+def to_primitive(obj):
+    # proste typy
+    if obj is None or isinstance(obj, (str, int, float, bool)):
+        return obj
+
+    # datetime -> ISO string
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+
+    # listy/tuple -> rekurencja
+    if isinstance(obj, (list, tuple)):
+        return [to_primitive(i) for i in obj]
+
+    # słowniki -> rekurencja po wartościach
+    if isinstance(obj, dict):
+        return {k: to_primitive(v) for k, v in obj.items()}
+
+    # obiekty mające to_dict()
+    if hasattr(obj, "to_dict") and callable(obj.to_dict):
+        try:
+            data = obj.to_dict()
+            return to_primitive(data)
+        except Exception:
+            pass
+
+    # obiekty z __dict__ (np. DTO)
+    if hasattr(obj, "__dict__"):
+        try:
+            data = vars(obj)
+            return {k: to_primitive(v) for k, v in data.items()}
+        except Exception:
+            pass
+
+    # fallback: string representation
+    try:
+        return str(obj)
+    except Exception:
+        return None
+
+
+
 
 # ------------------ TEST / PING ------------------
 @app.route("/ping", methods=["GET"])
@@ -246,6 +347,7 @@ def api_update_machine_part_stat():
                     updated += 1
             except (KeyError, ValueError, TypeError):
                 continue
+        sse_queue.put(True) 
         return jsonify({"status": "ok", "updated": updated, "received": len(data)}), 200
 
     # --- Jeśli pojedynczy obiekt ---
@@ -259,6 +361,7 @@ def api_update_machine_part_stat():
 
         success = repo.update_machine_part_stat(part_id, counter, is_empty)
         if success:
+            sse_queue.put(True) 
             return jsonify({"status": "ok", "message": f"part_id={part_id} zaktualizowany"}), 200
         else:
             return jsonify({"error": f"Nie znaleziono części o part_id={part_id}"}), 404
@@ -277,6 +380,7 @@ def api_add_occurrences():
         alarms = data["alarms"]
         success = repo.insert_part_error_occurrences(alarms)
         if success:
+            sse_queue.put(True) 
             return jsonify({"status": "OK", "added": len(alarms)})
         else:
             return jsonify({"status": "FAIL"}), 500
@@ -284,9 +388,38 @@ def api_add_occurrences():
     except Exception as e:
         print(f"❌ Błąd endpointu: {e}")
         return jsonify({"error": "Blad serwera"}), 500
-
     
+@app.route("/api/stream")
+def sse_stream():
+    def generate():
+        # pobieramy machine_id z query params (np. /api/stream?machine_id=2)
+        try:
+            req_machine_id = int(request.args.get("machine_id") or 1)
+        except Exception:
+            req_machine_id = 1
 
+        while True:
+            try:
+                # czeka maksymalnie 60s na sygnał z POST; jeśli nic, to wyśle snapshot
+                sse_queue.get(timeout=5)
+            except Empty:
+                # timeout – brak zmian, i tak wyśle snapshot
+                pass
+
+            try:
+                payload = get_payload(machine_id=req_machine_id)
+                yield f"data: {json.dumps(payload)}\n\n"
+            except Exception as e:
+                # logujemy i wysyłamy informację o błędzie (ale nie zamykamy strumienia)
+                print(f"❌ Błąd w serializacji SSE: {e}")
+                try:
+                    err_payload = {"timestamp": datetime.now().isoformat(), "error": "serialization_error", "msg": str(e)}
+                    yield f"data: {json.dumps(err_payload)}\n\n"
+                except Exception:
+                    # jeśli nawet to się nie powiedzie, czekamy chwilę i kontynuujemy
+                    time.sleep(1)
+
+    return Response(stream_with_context(generate()), mimetype="text/event-stream")
     
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

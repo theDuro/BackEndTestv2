@@ -21,8 +21,8 @@ from dto.machine_part import MachinePartDTO
 from dto.machine_part_error_occurrence import MachinePartErrorOccurrenceDTO
 from dto.machine_part_error import MachinePartErrorDTO
 
+DATABASE_URL = "postgresql+psycopg2://postgres:Test1234!@host.docker.internal:5432/postgres"
 
-DATABASE_URL = "postgresql://autosoft:Test1234%21@autosoft.postgres.database.azure.com:5432/postgres?sslmode=require"
 
 engine = create_engine(DATABASE_URL, echo=False)
 Base.metadata.create_all(engine)
